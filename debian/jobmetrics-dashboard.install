@@ -1,0 +1,4 @@
+conf/jobmetrics-dashboard.conf etc/apache2/conf-available
+html/* usr/share/jobmetrics/dashboard
+js/* usr/share/jobmetrics/dashboard/js
+css/* usr/share/jobmetrics/dashboard/css

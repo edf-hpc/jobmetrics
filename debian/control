@@ -1,0 +1,42 @@
+Source: jobmetrics
+Maintainer: CCN HPC <dsp-cspito-ccn-hpc@edf.fr>
+Uploaders: Rémi Palancher <remi-externe.palancher@edf.fr>, Mehdi Dogguy <mehdi.dogguy@edf.fr>
+Section: web
+Priority: extra
+Standards-Version: 3.9.6
+Build-Depends: debhelper (>= 8), apache2-dev
+
+Package: jobmetrics-restapi
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ apache2 | httpd,
+ libapache2-mod-wsgi,
+ python-flask,
+ python-requests
+Description: Backend REST API of Jobmetrics
+ Jobmetrics web application backend REST API. It is developed in Python
+ using Flask web framework.
+
+Package: jobmetrics-dashboard
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ javascript-common,
+ libjs-bootstrap,
+ libjs-jquery,
+ libjs-jquery-flot
+Description: HTML+JS dashboard of Jobmetrics
+ Jobmetrics web application dashboard. It is developed in HTML and
+ Javascript that runs in a browser.
+
+Package: jobmetrics
+Architecture: any
+Depends:
+ ${misc:Depends},
+ jobmetrics-restapi (= ${binary:Version}),
+ jobmetrics-dashboard (= ${binary:Version})
+Description: Meta-package with all Jobmetrics components
+ This meta-package installs both the REST API and the dashboard.

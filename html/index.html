@@ -1,0 +1,38 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Flot Examples: Visitors</title>
+    <link href="css/jobmetrics.css" rel="stylesheet" type="text/css">
+    <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="../../excanvas.min.js"></script><![endif]-->
+    <script language="javascript" type="text/javascript" src="/javascript/jquery/jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="/javascript/jquery-flot/jquery.flot.js"></script>
+    <script language="javascript" type="text/javascript" src="/javascript/jquery-flot/jquery.flot.time.js"></script>
+    <script language="javascript" type="text/javascript" src="/javascript/jquery-flot/jquery.flot.selection.js"></script>
+    <script language="javascript" type="text/javascript" src="/javascript/jquery-flot/jquery.flot.stack.js"></script>
+    <script language="javascript" type="text/javascript" src="js/jobmetrics.js"></script>
+</head>
+<body>
+
+    <div id="header"></div>
+
+    <div id="content">
+        <div class="metrics-container">
+            <div id="placeholder" class="metrics-placeholder"></div>
+        </div>
+    </div>
+
+    <div id="footer">
+        Jobmetrics - Copyright &copy; 2015 - CCN-HPC EDF SA
+    </div>
+
+    <script type="text/javascript">
+      $(document).ready(
+        function() {
+          show_job_diagram();
+        }
+      );
+    </script>
+
+</body>
+</html>

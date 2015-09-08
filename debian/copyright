@@ -1,0 +1,18 @@
+This work was packaged for Debian by:
+
+    Rémi Palancher <remi-externe.palancher@edf.fr> on Mon, 7 Sep 2015 17:35:56 +0200
+
+It was downloaded from https://github.com/edf-hpc/jobmetrics
+
+Upstream Author:
+
+    Rémi Palancher <remi-externe.palancher@edf.fr>
+
+Copyright:
+
+    Copyright (C) 2015 EDF SA
+
+License:
+
+This software and the debian packaging are provided under the GPL version 3,
+see `/usr/share/common-licenses/GPL-3'.
