@@ -27,6 +27,11 @@ CONF = '/etc/jobmetrics/jobmetrics.conf'
 app = Flask(__name__)
 conf = None
 
+# valid periods with their associated interval group time
+periods = { '1h': '10s',
+            '6h': '30s',
+            '24h': '120s' }
+
 def get_job_state(cluster, job):
     """Request the Slurm REST API of the cluster to check if the job actually
        exists. Return NOTFOUND if not.
@@ -63,16 +68,19 @@ def get_metric_results(cluster, job, metric, period, group=''):
        get_job_node_metrics() function.
     """
 
+    time_group = periods[period]
+
     url = "{influxdb}/query".format(influxdb=conf.get('influxdb', 'server'))
     req = "select mean(value) from \"{metric}\" " \
           "where time > now() - {period} " \
           "and cluster = '{cluster}' " \
           "and job = 'job_{job}' " \
-          "group by time(10s){group} fill(0)" \
+          "group by time({time_group}){group} fill(0)" \
             .format(metric=metric,
                     period=period,
                     cluster=cluster,
                     job=job,
+                    time_group=time_group,
                     group=group)
     db = conf.get('influxdb', 'db')
 
@@ -155,18 +163,21 @@ def read_conf():
     conf = ConfigParser.RawConfigParser()
     conf.read(CONF)
 
-@app.route('/metrics/<cluster>/<int:job>')
-def metrics(cluster, job):
+@app.route('/metrics/<cluster>/<int:job>', defaults={'period': '1h'})
+@app.route('/metrics/<cluster>/<int:job>/<period>')
+def metrics(cluster, job, period):
 
      read_conf()
      job_state = get_job_state(cluster, job)
+
+     if period not in periods.keys():
+         abort(500)
 
      if (job_state == 'NOTFOUND'):
          # No way to get job time boundaries as of now... So get nothing
          # more clever to do here.
          abort(404)
      else:
-         period = '1h'
          try:
              metrics = {}
              get_job_metrics(metrics, cluster, job, 'cpus', period)
