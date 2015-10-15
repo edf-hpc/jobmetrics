@@ -14,7 +14,8 @@ Depends:
  apache2 | httpd,
  libapache2-mod-wsgi,
  python-flask,
- python-requests
+ python-requests,
+ clustershell
 Description: Backend REST API of Jobmetrics
  Jobmetrics web application backend REST API. It is developed in Python
  using Flask web framework.

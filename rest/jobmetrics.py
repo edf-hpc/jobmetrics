@@ -20,6 +20,7 @@
 
 import ConfigParser
 from flask import Flask, jsonify, abort
+from ClusterShell.NodeSet import NodeSet
 import requests
 import json
 
@@ -94,7 +95,7 @@ def get_metric_results(cluster, job, metric, period, group=''):
 
     return results
 
-def get_job_node_metrics(metrics, cluster, job, metric, period):
+def get_job_node_metrics(metrics, ns, cluster, job, metric, period):
     """Get the node related metric for the cluster and the job for the period
        in parameter. It compute the sum of all metric node series to get only
        one global serie for all nodes. It appends the result into the metrics
@@ -144,6 +145,9 @@ def get_job_node_metrics(metrics, cluster, job, metric, period):
         metrics[value[0]].append(total)
         value_idx += 1
 
+    node_list = [ node_serie['tags']['node'] for node_serie in results ]
+    ns.updaten(node_list)
+
 def get_job_metrics(metrics, cluster, job, metric, period):
     """Get the job metric for the job on the cluster for the period in
        parameter. Append the result into the metrics dict in parameter.
@@ -179,12 +183,16 @@ def metrics(cluster, job, period):
          abort(404)
      else:
          try:
+             ns = NodeSet()
              metrics = {}
-             get_job_metrics(metrics, cluster, job, 'cpus', period)
-             get_job_node_metrics(metrics, cluster, job, 'cpu-user', period)
-             get_job_node_metrics(metrics, cluster, job, 'cpu-system', period)
-             stack_cpu_idle(metrics)
-             get_job_node_metrics(metrics, cluster, job, 'memory-pss', period)
+             metrics['data'] = {}
+             get_job_metrics(metrics['data'], cluster, job, 'cpus', period)
+             get_job_node_metrics(metrics['data'], ns, cluster, job, 'cpu-user', period)
+             get_job_node_metrics(metrics['data'], ns, cluster, job, 'cpu-system', period)
+             stack_cpu_idle(metrics['data'])
+             get_job_node_metrics(metrics['data'], ns, cluster, job, 'memory-pss', period)
+             metrics['job'] = {}
+             metrics['job']['nodeset'] = str(ns)
              return jsonify(metrics)
          except Exception, e:
              print(e)

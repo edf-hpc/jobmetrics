@@ -86,6 +86,10 @@ function init_period_links() {
     $('#period-6h').click(function(){ set_period('6h'); return false; });
     $('#period-24h').click(function(){ set_period('24h'); return false; });
 }
+function update_job_info(job_info) {
+    $('#jobinfo').empty()
+    $('#jobinfo').append('data from nodes: ' + job_info['nodeset'])
+}
 
 function update() {
 
@@ -94,11 +98,12 @@ function update() {
 
     api = "/jobmetrics-restapi/metrics/" + cluster + "/" + job + "/" + period;
     $.getJSON(api, function(result){
-        plot.setData(process_metrics_result(result));
+        plot.setData(process_metrics_result(result['data']));
         // Since the axes don't change, we don't need to call plot.setupGrid()
         plot.setupGrid();
         plot.draw();
         update_timeout = setTimeout(update, updateInterval);
+        update_job_info(result['job']);
     });
 
 }
