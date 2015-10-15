@@ -103,15 +103,23 @@ function update() {
 
 }
 
+function set_title(cluster_job) {
+
+    title = "cluster " + cluster + " job " + job;
+    $('#header').empty();
+    $('#header').append("<h2>HPC metrics: " + title + "</h2>");
+    $('title').empty();
+    $('title').append("HPC metrics: " + title);
+
+}
+
 function draw_diagram() {
 
     job = getUrlParameter('job');
     cluster = getUrlParameter('cluster');
 
     init_period_links();
-
-    $('#header').empty()
-    $('#header').append("<h2>Cluster " + cluster + " job " + job + "</h2>")
+    set_title(cluster, job);
 
     var options = {
         lines: {
