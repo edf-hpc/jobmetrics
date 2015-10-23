@@ -26,8 +26,10 @@ function process_metrics_result(result) {
     var cpu_system = new Array;
     var cpu_idle = new Array;
     var memory_pss = new Array;
+    var utc_offset_msec = new Date().getTimezoneOffset() * 60 * 1000;
 
-    $.each(result, function( timestamp, values ) {
+    $.each(result, function( timestamp_utc, values ) {
+        var timestamp = parseInt(timestamp_utc) - utc_offset_msec;
         cpu_user.push([timestamp, values[1]]);
         cpu_system.push([timestamp, values[2]]);
         cpu_idle.push([timestamp, values[3]]);
