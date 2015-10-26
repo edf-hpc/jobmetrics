@@ -89,10 +89,13 @@ function init_period_links() {
     $('#period-24h').click(function(){ set_period('24h'); return false; });
 }
 function update_job_info(job_info) {
-    $('#jobinfo').empty()
-    $('#jobinfo').append('data from nodes: ' + job_info['producers'])
-    $('#jobinfo').append('job on nodes: ' + job_info['nodes'])
-    $('#jobinfo').append('mute nodes: ' + job_info['mutes'])
+    $('#jobinfo').empty();
+    content = "<ul>" +
+              "<li>job nodes: " + job_info['nodes'] + "</li>" +
+              "<li>metrics producers: " + job_info['producers'] + "</li>" +
+              "<li>mute nodes: " + job_info['mutes'] + "</li>" +
+              "</ul>";
+    $('#jobinfo').append(content);
 }
 
 function update() {
