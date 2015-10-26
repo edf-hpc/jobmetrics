@@ -112,14 +112,20 @@ function update() {
 
 }
 
-function set_title(cluster_job) {
+function set_title() {
 
-    title = "cluster " + cluster + " job " + job;
+
     $('#header').empty();
-    $('#header').append("<h2>HPC metrics: " + title + "</h2>");
+    $('#header').append("<h2>HPC metrics:&nbsp;</h2>");
+    $('h2').append("cluster " + cluster,
+                   " <a id='jobid' href='#'>job " + job + "</a>");
     $('title').empty();
-    $('title').append("HPC metrics: " + title);
-
+    $('title').append("HPC metrics: job " + job);
+    $('#jobid').click( function() {
+        $('#jobinfo').toggle();
+        console.log('toggle!');
+        return false;
+    });
 }
 
 function draw_diagram() {
