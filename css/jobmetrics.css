@@ -81,6 +81,21 @@ input[type=checkbox] {
 	border-color: #777;
 }
 
+#jobinfo {
+	display: none;
+	position: absolute;
+	top: 50px;
+	width: 200px;
+	left: 50%;
+	margin-left:-100px;
+	padding: 5px 0 5px 30px;
+        font-size: 12px;
+	background-color: #ccc;
+	border-style: solid;
+	border-width: 1px;
+	border-color: #777;
+}
+
 .metrics-container {
 	box-sizing: border-box;
 	width: 100%;
