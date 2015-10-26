@@ -254,6 +254,7 @@ class JobData(object):
         datahash['job'] = {}
         datahash['job']['producers'] = str(self.nodeset)
         datahash['job']['nodes'] = str(self.job.nodeset)
+        datahash['job']['mutes'] = str(self.job.nodeset - self.nodeset)
         return jsonify(datahash)
 
 @app.route('/metrics/<cluster>/<int:jobid>', defaults={'period': '1h'})

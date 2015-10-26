@@ -92,6 +92,7 @@ function update_job_info(job_info) {
     $('#jobinfo').empty()
     $('#jobinfo').append('data from nodes: ' + job_info['producers'])
     $('#jobinfo').append('job on nodes: ' + job_info['nodes'])
+    $('#jobinfo').append('mute nodes: ' + job_info['mutes'])
 }
 
 function update() {
