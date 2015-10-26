@@ -69,6 +69,18 @@ input[type=checkbox] {
 	color: #999;
 }
 
+#period-selector {
+	position: absolute;
+	right: 10px;
+	top: 10px;
+	padding: 0 15px;
+	font-size: 12px;
+	background-color: #ccc;
+	border-style: solid;
+	border-width: 1px;
+	border-color: #777;
+}
+
 .metrics-container {
 	box-sizing: border-box;
 	width: 100%;
