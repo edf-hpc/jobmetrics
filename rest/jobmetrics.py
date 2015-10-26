@@ -69,14 +69,14 @@ class MetricsDB(object):
                 .format(metrics=metrics_s,
                         period=period,
                         cluster=cluster,
-                        job=job,
+                        job=job.jobid,
                         time_group=time_group)
 
         payload = {'db': self.db, 'q': req, 'epoch': 'ms'}
         resp = requests.get(url=self.url, params=payload)
         if resp.status_code == 404:
             raise LookupError("metrics not found for job {job} on cluster " \
-                              "{cluster}".format(job=job, cluster=cluster))
+                              "{cluster}".format(job=job.jobid, cluster=cluster))
         data = json.loads(resp.text)
 
         # data is a dict with 'results' key that is itself a list of dict with
@@ -180,15 +180,31 @@ class MetricsDB(object):
 
         return (results, nodeset)
 
+class JobParams(object):
+
+    def __init__(self, jobid):
+
+       self.jobid = jobid
+       self.state = None
+       self.nodeset = None
+
+    def request_params(self, api):
+       try:
+           params = api.job_params(self.jobid)
+           self.state = params['job_state']
+           self.nodeset = NodeSet(params['nodes'].encode('utf-8'))
+       except IndexError:
+           self.state = 'NOTFOUND'
+
 class SlurmAPI(object):
 
     def __init__(self, conf, cluster):
 
         self.base_url = conf.slurm_api(cluster)
 
-    def job_state(self, job):
-        """Request the Slurm REST API of the cluster to check if the job actually
-           exists. Return NOTFOUND if not.
+    def job_params(self, job):
+        """Request the Slurm REST API of the cluster to get Job params. Raises
+           IndexError if job is not found.
         """
 
         url = "{base}/job/{job}" \
@@ -196,12 +212,10 @@ class SlurmAPI(object):
                           job=job)
         resp = requests.get(url=url)
         if resp.status_code == 404:
-            state = 'NOTFOUND'
+            raise IndexError("job ID % {jobid} not found in API {api}" \
+                               .format(jobid=job, api=self.base_url))
         else:
-            data = json.loads(resp.text)
-            state = data['job_state']
-
-        return state
+            return json.loads(resp.text)
 
 class JobData(object):
 
@@ -238,21 +252,23 @@ class JobData(object):
         datahash = {}
         datahash['data'] = self.metrics
         datahash['job'] = {}
-        datahash['job']['nodeset'] = str(self.nodeset)
+        datahash['job']['producers'] = str(self.nodeset)
+        datahash['job']['nodes'] = str(self.job.nodeset)
         return jsonify(datahash)
 
-@app.route('/metrics/<cluster>/<int:job>', defaults={'period': '1h'})
-@app.route('/metrics/<cluster>/<int:job>/<period>')
-def metrics(cluster, job, period):
+@app.route('/metrics/<cluster>/<int:jobid>', defaults={'period': '1h'})
+@app.route('/metrics/<cluster>/<int:jobid>/<period>')
+def metrics(cluster, jobid, period):
 
      conf = Conf()
      slurm_api = SlurmAPI(conf, cluster)
-     job_state = slurm_api.job_state(job)
+     job = JobParams(jobid)
+     job.request_params(slurm_api)
 
      if period not in periods.keys():
          abort(500)
 
-     if (job_state == 'NOTFOUND'):
+     if (job.state == 'NOTFOUND'):
          # No way to get job time boundaries as of now... So get nothing
          # more clever to do here.
          abort(404)
