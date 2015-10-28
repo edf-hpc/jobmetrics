@@ -85,9 +85,9 @@ input[type=checkbox] {
 	display: none;
 	position: absolute;
 	top: 50px;
-	width: 200px;
+	width: 400px;
 	left: 50%;
-	margin-left:-100px;
+	margin-left:-200px;
 	padding: 5px 0 5px 30px;
         font-size: 12px;
 	background-color: #ccc;
