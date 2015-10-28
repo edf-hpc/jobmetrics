@@ -176,7 +176,14 @@ class MetricsDB(object):
                         else:
                             results[timestamp].append(0)
                 else:
-                    results[timestamp][metrics.index(metric)] += value
+                    # The cpus/nodes metrics can be produced by several batch
+                    # servers and thus returned multiple times by InfluxDB
+                    # server in the result of the request. We must take care to
+                    # not add the multiple results of this metric here!
+                    if metric in ['cpus', 'nodes']:
+                        results[timestamp][metrics.index(metric)] = value
+                    else:
+                        results[timestamp][metrics.index(metric)] += value
 
         return (results, nodeset)
 
