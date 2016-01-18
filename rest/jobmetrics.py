@@ -200,6 +200,8 @@ class JobParams(object):
            params = api.job_params(self.jobid)
            self.state = params['job_state']
            self.nodeset = NodeSet(params['nodes'].encode('utf-8'))
+       except ValueError:
+           self.state = 'NOTFOUND'
        except IndexError:
            self.state = 'NOTFOUND'
 
@@ -211,7 +213,8 @@ class SlurmAPI(object):
 
     def job_params(self, job):
         """Request the Slurm REST API of the cluster to get Job params. Raises
-           IndexError if job is not found.
+           IndexError if job is not found or ValueError if not well formatted
+           JSON data sent by the API.
         """
 
         url = "{base}/job/{job}" \
@@ -222,7 +225,13 @@ class SlurmAPI(object):
             raise IndexError("job ID % {jobid} not found in API {api}" \
                                .format(jobid=job, api=self.base_url))
         else:
-            return json.loads(resp.text)
+            try:
+                json_job = json.loads(resp.text)
+            except ValueError:
+                # reformat the exception
+                raise ValueError("not JSON data for GET {url}" \
+                                   .format(url=url))
+            return json_job
 
 class JobData(object):
 
