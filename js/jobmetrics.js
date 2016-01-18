@@ -165,12 +165,6 @@ function draw_diagram() {
         }
     };
 
-    var api = "/jobmetrics-restapi/metrics/" + cluster + "/" + job + "/" + period;
-
-    $.getJSON(api, function(result){
-        plot = $.plot("#placeholder", process_metrics_result(result), options);
-    });
-
     update();
 
 }
