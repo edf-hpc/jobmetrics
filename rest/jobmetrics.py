@@ -22,6 +22,7 @@ import ConfigParser
 from flask import Flask, jsonify, abort
 from ClusterShell.NodeSet import NodeSet
 import requests
+from requests.exceptions import ConnectionError
 import json
 
 app = Flask(__name__)
@@ -229,7 +230,13 @@ class SlurmAPI(object):
         url = "{base}/job/{job}" \
                   .format(base=self.base_url,
                           job=job)
-        resp = requests.get(url=url)
+        try:
+            resp = requests.get(url=url)
+        except ConnectionError, err:
+            # reformat the exception
+            raise ValueError("connection error while trying to connect to " \
+                             "{url}: {error}".format(url=url, error=err))
+
         if resp.status_code == 404:
             raise IndexError("job ID % {jobid} not found in API {api}" \
                                .format(jobid=job, api=self.base_url))
@@ -300,6 +307,10 @@ def metrics(cluster, jobid, period):
          # ValueError means the Slurm API responded something that was not
          # JSON formatted. Return 500 with error message.
          abort(500, { 'error': str(err) })
+     except ConnectionError, err:
+         # ConnectionError means there was a problem while connection to the
+         # slurm API. Return 500 with error message.
+         abort(500, { 'error': str(err) })
 
      # Check the period given in parameter is valid. If not, return 500.
      if period not in periods.keys():
@@ -310,7 +321,7 @@ def metrics(cluster, jobid, period):
          job_data = JobData(cluster, job, period)
          job_data.request(db)
          return job_data.jsonify()
-     except Exception, e:
+     except Exception, err:
          abort(500, { 'error': str(err) })
 
 if __name__ == '__main__':
