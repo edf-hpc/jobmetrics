@@ -31,6 +31,20 @@ periods = { '1h': '10s',
             '6h': '30s',
             '24h': '120s' }
 
+@app.errorhandler(500)
+def internal_error(error):
+    if not hasattr(error, 'description'):
+        error.description = { 'error' : 'unknown internal error'}
+    response = jsonify(error.description)
+    response.status_code = 500
+    return response
+
+@app.errorhandler(404)
+def page_not_found(error):
+    response = jsonify(error.description)
+    response.status_code = 404
+    return response
+
 class Conf(object):
 
     def __init__(self, fpath='/etc/jobmetrics/jobmetrics.conf'):
@@ -196,14 +210,9 @@ class JobParams(object):
        self.nodeset = None
 
     def request_params(self, api):
-       try:
-           params = api.job_params(self.jobid)
-           self.state = params['job_state']
-           self.nodeset = NodeSet(params['nodes'].encode('utf-8'))
-       except ValueError:
-           self.state = 'NOTFOUND'
-       except IndexError:
-           self.state = 'NOTFOUND'
+       params = api.job_params(self.jobid)
+       self.state = params['job_state']
+       self.nodeset = NodeSet(params['nodes'].encode('utf-8'))
 
 class SlurmAPI(object):
 
@@ -280,24 +289,29 @@ def metrics(cluster, jobid, period):
      conf = Conf()
      slurm_api = SlurmAPI(conf, cluster)
      job = JobParams(jobid)
-     job.request_params(slurm_api)
 
+     try:
+         job.request_params(slurm_api)
+     except IndexError, err:
+         # IndexError here means the job is unknown according to Slurm API.
+         # Return 404 with error message
+         abort(404, { 'error': str(err) })
+     except ValueError, err:
+         # ValueError means the Slurm API responded something that was not
+         # JSON formatted. Return 500 with error message.
+         abort(500, { 'error': str(err) })
+
+     # Check the period given in parameter is valid. If not, return 500.
      if period not in periods.keys():
-         abort(500)
+         abort(500, { 'error': "period %s is not valid" % (period) })
 
-     if (job.state == 'NOTFOUND'):
-         # No way to get job time boundaries as of now... So get nothing
-         # more clever to do here.
-         abort(404)
-     else:
-         try:
-             db = MetricsDB(conf)
-             job_data = JobData(cluster, job, period)
-             job_data.request(db)
-             return job_data.jsonify()
-         except Exception, e:
-             print("Error: " + str(e))
-             abort(500)
+     try:
+         db = MetricsDB(conf)
+         job_data = JobData(cluster, job, period)
+         job_data.request(db)
+         return job_data.jsonify()
+     except Exception, e:
+         abort(500, { 'error': str(err) })
 
 if __name__ == '__main__':
     app.run(debug=True)
