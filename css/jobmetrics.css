@@ -97,6 +97,16 @@ input[type=checkbox] {
 	z-index: 1;
 }
 
+#error {
+	display: none;
+	position: absolute;
+	top: 50px;
+	width: 600px;
+	left: 50%;
+	margin-left:-300px;
+	z-index: 1;
+}
+
 .metrics-container {
 	box-sizing: border-box;
 	width: 100%;

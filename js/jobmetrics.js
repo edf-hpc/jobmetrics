@@ -98,20 +98,32 @@ function update_job_info(job_info) {
     $('#jobinfo').append(content);
 }
 
+function show_error(status, error) {
+    var $box = $('#error');
+    $box.append("<strong>error " + status + ":</strong> " + error.error);
+    $box.show();
+}
+
 function update() {
 
     if (update_timeout != null)
         clearTimeout(update_timeout);
 
     api = "/jobmetrics-restapi/metrics/" + cluster + "/" + job + "/" + period;
-    $.getJSON(api, function(result){
+    $.ajax({
+        url: api,
+        dataType: "json" })
+      .done( function(result){
         plot.setData(process_metrics_result(result['data']));
         // Since the axes don't change, we don't need to call plot.setupGrid()
         plot.setupGrid();
         plot.draw();
         update_timeout = setTimeout(update, updateInterval);
         update_job_info(result['job']);
-    });
+      })
+      .fail( function(jqXHR, textStatus, errorThrown) {
+        show_error(jqXHR.status, $.parseJSON(jqXHR.responseText));
+      });
 
 }
 
