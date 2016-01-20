@@ -238,7 +238,7 @@ class SlurmAPI(object):
                              "{url}: {error}".format(url=url, error=err))
 
         if resp.status_code == 404:
-            raise IndexError("job ID % {jobid} not found in API {api}" \
+            raise IndexError("job ID {jobid} not found in API {api}" \
                                .format(jobid=job, api=self.base_url))
         else:
             try:
