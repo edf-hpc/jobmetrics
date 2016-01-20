@@ -104,7 +104,7 @@ function show_error(status, error) {
     $box.show();
 }
 
-function update() {
+function update(options) {
 
     if (update_timeout != null)
         clearTimeout(update_timeout);
@@ -114,11 +114,17 @@ function update() {
         url: api,
         dataType: "json" })
       .done( function(result){
+        if (plot === null) {
+            // initialize on first call if null
+            plot = $.plot("#placeholder", process_metrics_result(result), options);
+        }
         plot.setData(process_metrics_result(result['data']));
         // Since the axes don't change, we don't need to call plot.setupGrid()
         plot.setupGrid();
         plot.draw();
-        update_timeout = setTimeout(update, updateInterval);
+        update_timeout = setTimeout(function() {
+            update(options);
+          }, updateInterval);
         update_job_info(result['job']);
       })
       .fail( function(jqXHR, textStatus, errorThrown) {
@@ -177,6 +183,6 @@ function draw_diagram() {
         }
     };
 
-    update();
+    update(options);
 
 }
