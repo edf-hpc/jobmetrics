@@ -305,13 +305,10 @@ def metrics(cluster, jobid, period):
          # IndexError here means the job is unknown according to Slurm API.
          # Return 404 with error message
          abort(404, { 'error': str(err) })
-     except ValueError, err:
+     except (ValueError, ConnectionError) as err:
          # ValueError means the Slurm API responded something that was not
-         # JSON formatted. Return 500 with error message.
-         abort(500, { 'error': str(err) })
-     except ConnectionError, err:
-         # ConnectionError means there was a problem while connection to the
-         # slurm API. Return 500 with error message.
+         # JSON formatted. ConnectionError means there was a problem while
+         # connection to the slurm API. Return 500 with error message.
          abort(500, { 'error': str(err) })
 
      # Check the period given in parameter is valid. If not, return 500.
