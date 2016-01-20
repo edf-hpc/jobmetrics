@@ -242,14 +242,13 @@ class SlurmAPI(object):
         if resp.status_code == 404:
             raise IndexError("job ID {jobid} not found in API {api}" \
                                .format(jobid=job, api=self.base_url))
-        else:
-            try:
-                json_job = json.loads(resp.text)
-            except ValueError:
-                # reformat the exception
-                raise ValueError("not JSON data for GET {url}" \
-                                   .format(url=url))
-            return json_job
+        try:
+            json_job = json.loads(resp.text)
+        except ValueError:
+            # reformat the exception
+            raise ValueError("not JSON data for GET {url}" \
+                               .format(url=url))
+        return json_job
 
 class JobData(object):
 
