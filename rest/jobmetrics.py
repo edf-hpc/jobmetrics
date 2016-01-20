@@ -53,6 +53,8 @@ class Conf(object):
         self.conf.read(fpath)
         self.influxdb_server = self.conf.get('influxdb', 'server')
         self.influxdb_db = self.conf.get('influxdb', 'db')
+        # All sections except influxdb are cluster names. So get all sections
+        # names minus influxdb.
         self.clusters = self.conf.sections().remove('influxdb')
 
     def slurm_api(self, cluster):
