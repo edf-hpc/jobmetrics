@@ -25,6 +25,7 @@ import requests
 from requests.exceptions import ConnectionError
 import json
 import os
+from StringIO import StringIO
 
 app = Flask(__name__)
 
@@ -50,7 +51,16 @@ def page_not_found(error):
 class Conf(object):
 
     def __init__(self, fpath='/etc/jobmetrics/jobmetrics.conf'):
+
+        defaults = StringIO( \
+          "[global]\n" \
+          "cache = /var/cache/jobmetrics/jobmetrics.data\n" \
+          "[influxdb]\n" \
+          "server = http://localhost:8086\n" \
+          "db = graphite\n" )
+
         self.conf = ConfigParser.RawConfigParser()
+        self.conf.readfp(defaults)
         self.conf.read(fpath)
         self.influxdb_server = self.conf.get('influxdb', 'server')
         self.influxdb_db = self.conf.get('influxdb', 'db')
@@ -66,11 +76,21 @@ class Conf(object):
 
     def login(self, cluster):
 
-        return self.conf.get(cluster, 'login')
+        # by default, if no login is provided in conf and slurm-web
+        # authentication is enabled, the app tries to login as guest.
+        try:
+            return self.conf.get(cluster, 'login')
+        except ConfigParser.NoOptionError as err:
+            return 'guest'
 
     def password(self, cluster):
 
-        return self.conf.get(cluster, 'password')
+        # password is optional (typically, it is useless with guest account)
+        # with no sane default.
+        try:
+            self.conf.get(cluster, 'password')
+        except ConfigParser.NoOptionError as err:
+            return None
 
 class Cache(object):
 
