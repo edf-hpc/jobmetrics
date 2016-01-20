@@ -24,6 +24,7 @@ from ClusterShell.NodeSet import NodeSet
 import requests
 from requests.exceptions import ConnectionError
 import json
+import os
 
 app = Flask(__name__)
 
@@ -53,12 +54,88 @@ class Conf(object):
         self.conf.read(fpath)
         self.influxdb_server = self.conf.get('influxdb', 'server')
         self.influxdb_db = self.conf.get('influxdb', 'db')
-        # All sections except influxdb are cluster names. So get all sections
-        # names minus influxdb.
-        self.clusters = self.conf.sections().remove('influxdb')
+        self.cache_path = self.conf.get('global', 'cache')
+        # All sections except influxdb and global are cluster names. So get all
+        # sections names minus those two.
+        self.clusters = [ cluster for cluster in self.conf.sections()
+                          if cluster not in ['influxdb', 'global'] ]
 
-    def slurm_api(self, cluster):
-        return self.conf.get(cluster, 'slurm-api')
+    def api(self, cluster):
+
+        return self.conf.get(cluster, 'api')
+
+    def login(self, cluster):
+
+        return self.conf.get(cluster, 'login')
+
+    def password(self, cluster):
+
+        return self.conf.get(cluster, 'password')
+
+class Cache(object):
+
+    def __init__(self, path):
+
+        self.path = path
+        self.cluster_caches = None
+
+    def read(self):
+
+        # ensure dict is empty
+        self.cluster_caches = {}
+
+        if not os.path.exists(self.path):
+            return
+
+        with open(self.path, 'r') as cache_f:
+            struct = json.load(cache_f)
+            for cluster, data in struct.iteritems():
+                self.cluster_caches[cluster] = \
+                    ClusterCache(data['token'],
+                                 data['auth_enabled'],
+                                 data['auth_guest'])
+
+    def write(self):
+
+        struct = {}
+        for cluster, cache in self.cluster_caches.iteritems():
+            struct[cluster] = { 'token': cache.token,
+                                'auth_enabled': cache.auth_enabled,
+                                'auth_guest': cache.auth_guest }
+
+        with open(self.path, 'w+') as cache_f:
+            json.dump(struct, cache_f)
+
+    def get(self, cluster):
+
+        if self.cluster_caches is None:
+            self.read()
+
+        # The cluster cache does not exist yet. Create a new empty cache.
+        if not self.cluster_caches.has_key(cluster):
+            self.cluster_caches[cluster] = ClusterCache()
+
+        return self.cluster_caches[cluster]
+
+class ClusterCache(object):
+
+    def __init__(self, token=None, auth_enabled=None, auth_guest=None):
+
+        self.token = token
+        self.auth_enabled = auth_enabled
+        self.auth_guest = auth_guest
+
+    @property
+    def empty(self):
+        return self.token is None and \
+               self.auth_enabled is None and \
+               self.auth_guest is None
+
+    def invalidate(self):
+
+        self.token = None
+        self.auth_enabled = None
+        self.auth_guest = None
 
 class MetricsDB(object):
 
@@ -213,27 +290,134 @@ class JobParams(object):
        self.nodeset = None
 
     def request_params(self, api):
+
        params = api.job_params(self.jobid)
        self.state = params['job_state']
        self.nodeset = NodeSet(params['nodes'].encode('utf-8'))
 
 class SlurmAPI(object):
 
-    def __init__(self, conf, cluster):
+    def __init__(self, conf, cluster, cache):
 
-        self.base_url = conf.slurm_api(cluster)
+        self.cluster = cluster
+        self.base_url = conf.api(cluster)
+        self.cache = cache
+        self.auth_login = conf.login(cluster)
+        self.auth_password = conf.password(cluster)
 
-    def job_params(self, job):
+        if cache.empty is None:
+            self.auth_token = None
+            self.auth_enabled = None
+            self.auth_guest = None
+        else:
+            self.auth_token = cache.token
+            self.auth_enabled = cache.auth_enabled
+            self.auth_guest = cache.auth_guest
+
+    @property
+    def auth_as_guest(self):
+
+        return self.auth_login == 'guest'
+
+    def check_auth(self):
+
+        url = "{base}/authentication".format(base=self.base_url)
+        try:
+            resp = requests.get(url=url)
+        except ConnectionError, err:
+            # reformat the exception
+            raise ConnectionError("connection error while trying to connect " \
+                                  "to {url}: {error}" \
+                                    .format(url=url, error=err))
+
+        try:
+            json_auth = json.loads(resp.text)
+        except ValueError:
+            # reformat the exception
+            raise ValueError("not JSON data for GET {url}" \
+                               .format(url=url))
+
+        self.auth_enabled = json_auth['enabled']
+        self.auth_guest = json_auth['guest']
+
+    def login(self):
+
+        url = "{base}/login".format(base=self.base_url)
+        try:
+            if self.auth_as_guest is True:
+                payload = { "guest": True }
+            else:
+                payload = { "username": self.auth_login,
+                            "password": self.auth_password }
+            resp = requests.post(url=url, json=payload)
+        except ConnectionError, err:
+            # reformat the exception
+            raise ConnectionError("connection error while trying to connect " \
+                                  "to {url}: {error}" \
+                                    .format(url=url, error=err))
+
+        if resp.status_code != 200:
+            raise Exception("login failed with {code} on API {api}" \
+                               .format(code=resp.status_code,
+                                       api=self.base_url))
+        try:
+            login = json.loads(resp.text)
+        except ValueError:
+            # reformat the exception
+            raise ValueError("not JSON data for POST {url}" \
+                               .format(url=url))
+
+        self.auth_token = login['id_token']
+
+    def ensure_auth(self):
+
+        # If cache was able to give us a token, assume auth is enable, the
+        # token is still valid and use it straightfully. If the token is not
+        # valid according to slurm-web, the error will be handled then.
+        if self.auth_token is not None:
+            return
+
+        # if auth_enabled is None, it means the cache was not able to tell us.
+        # In this case, we have to check ourselves.
+        if self.auth_enabled is None:
+            self.check_auth()
+            # update the cache with new data
+            self.cache.auth_enabled = self.auth_enabled
+            self.cache.auth_guest = self.auth_guest
+
+        # if the auth is disable, go on with it.
+        if self.auth_enabled is False:
+            return
+
+        # At this point, auth is enabled and we do not have token.
+
+        # First check if the app is configured to log as guest and guest login
+        # is enable.
+        if self.auth_as_guest and self.auth_guest is False:
+            raise Exception("unable to log as guest to {base}" \
+                              .format(base=self.base_url))
+
+        self.login()
+        # update token in cache
+        self.cache.token = self.auth_token
+
+    def job_params(self, job, firsttime=True):
         """Request the Slurm REST API of the cluster to get Job params. Raises
            IndexError if job is not found or ValueError if not well formatted
            JSON data sent by the API.
         """
 
+        self.ensure_auth()
+
         url = "{base}/job/{job}" \
                   .format(base=self.base_url,
                           job=job)
         try:
-            resp = requests.get(url=url)
+            if self.auth_enabled is True:
+                payload = { 'token': self.auth_token }
+                resp = requests.post(url=url, json=payload)
+            else:
+                resp = requests.post(url=url)
         except ConnectionError, err:
             # reformat the exception
             raise ValueError("connection error while trying to connect to " \
@@ -242,6 +426,22 @@ class SlurmAPI(object):
         if resp.status_code == 404:
             raise IndexError("job ID {jobid} not found in API {api}" \
                                .format(jobid=job, api=self.base_url))
+
+        if resp.status_code == 403:
+            if firsttime:
+                # We probably get this error because of invalidated token.
+                # Invalidate cache, trigger check_auth() and call this method
+                # again.
+                self.auth_token = None
+                self.auth_enabled = None
+                self.cache.invalidate()
+                return self.job_params(job, firsttime=False)
+            else:
+                # We have already tried twice. This means the app is not able
+                # to auth on slurm-web API with current params. Just throw the
+                # error and give-up here.
+                raise Exception("get 403/forbidden from {url} with new token" \
+                                  .format(url=self.base_url))
         try:
             json_job = json.loads(resp.text)
         except ValueError:
@@ -295,7 +495,10 @@ class JobData(object):
 def metrics(cluster, jobid, period):
 
      conf = Conf()
-     slurm_api = SlurmAPI(conf, cluster)
+     cache = Cache(conf.cache_path)
+     cluster_cache = cache.get(cluster)
+     slurm_api = SlurmAPI(conf, cluster, cluster_cache)
+
      job = JobParams(jobid)
 
      try:
@@ -304,11 +507,14 @@ def metrics(cluster, jobid, period):
          # IndexError here means the job is unknown according to Slurm API.
          # Return 404 with error message
          abort(404, { 'error': str(err) })
-     except (ValueError, ConnectionError) as err:
+     except (ValueError, ConnectionError, Exception) as err:
          # ValueError means the Slurm API responded something that was not
          # JSON formatted. ConnectionError means there was a problem while
          # connection to the slurm API. Return 500 with error message.
          abort(500, { 'error': str(err) })
+
+     # Write the cache at this point since it will not be modified then
+     cache.write()
 
      # Check the period given in parameter is valid. If not, return 500.
      if period not in periods.keys():
