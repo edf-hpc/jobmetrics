@@ -18,8 +18,6 @@
 # You should have received a copy of the GNU General Public License
 # along with jobmetrics.  If not, see <http://www.gnu.org/licenses/>.
 
-from flask import Flask, jsonify, abort
-
 class JobData(object):
 
     def __init__(self, cluster, job, period):
@@ -50,7 +48,7 @@ class JobData(object):
         for timestamp, values in self.metrics.iteritems():
             values.insert(3, values[0]*100 - values[1] - values[2])
 
-    def jsonify(self):
+    def dump(self):
 
         datahash = {}
         datahash['data'] = self.metrics
@@ -58,4 +56,4 @@ class JobData(object):
         datahash['job']['producers'] = str(self.nodeset)
         datahash['job']['nodes'] = str(self.job.nodeset)
         datahash['job']['mutes'] = str(self.job.nodeset - self.nodeset)
-        return jsonify(datahash)
+        return datahash

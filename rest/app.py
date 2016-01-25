@@ -79,7 +79,7 @@ def metrics(cluster, jobid, period):
          db = MetricsDB(conf)
          job_data = JobData(cluster, job, period)
          job_data.request(db)
-         return job_data.jsonify()
+         return jsonify(job_data.dump())
      except Exception, err:
          abort(500, { 'error': str(err) })
 
