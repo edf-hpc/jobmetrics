@@ -92,9 +92,6 @@ function process_metrics_result(result) {
 
 }
 
-function show_job_diagram() {
-    draw_diagram();
-}
 
 function set_period(new_period) {
     console.log("period is: " + new_period);
