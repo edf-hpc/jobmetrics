@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with jobmetrics.  If not, see <http://www.gnu.org/licenses/>.
 
+
 class ClusterCache(object):
 
     def __init__(self, token=None, auth_enabled=None, auth_guest=None):
@@ -29,8 +30,8 @@ class ClusterCache(object):
     @property
     def empty(self):
         return self.token is None and \
-               self.auth_enabled is None and \
-               self.auth_guest is None
+            self.auth_enabled is None and \
+            self.auth_guest is None
 
     def invalidate(self):
 

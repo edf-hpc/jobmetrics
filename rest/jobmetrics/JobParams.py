@@ -20,16 +20,17 @@
 
 from ClusterShell.NodeSet import NodeSet
 
+
 class JobParams(object):
 
     def __init__(self, jobid):
 
-       self.jobid = jobid
-       self.state = None
-       self.nodeset = None
+        self.jobid = jobid
+        self.state = None
+        self.nodeset = None
 
     def request_params(self, api):
 
-       params = api.job_params(self.jobid)
-       self.state = params['job_state']
-       self.nodeset = NodeSet(params['nodes'].encode('utf-8'))
+        params = api.job_params(self.jobid)
+        self.state = params['job_state']
+        self.nodeset = NodeSet(params['nodes'].encode('utf-8'))

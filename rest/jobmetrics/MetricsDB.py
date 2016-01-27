@@ -24,6 +24,7 @@ from ClusterShell.NodeSet import NodeSet
 
 from jobmetrics.Conf import periods
 
+
 class MetricsDB(object):
 
     def __init__(self, conf):
@@ -47,23 +48,26 @@ class MetricsDB(object):
               "and cluster = '{cluster}' " \
               "and job = 'job_{job}' " \
               "group by time({time_group}), node fill(0)" \
-                .format(metrics=metrics_s,
-                        period=period,
-                        cluster=cluster,
-                        job=job.jobid,
-                        time_group=time_group)
+              .format(metrics=metrics_s,
+                      period=period,
+                      cluster=cluster,
+                      job=job.jobid,
+                      time_group=time_group)
 
         payload = {'db': self.db, 'q': req, 'epoch': 'ms'}
         resp = requests.get(url=self.url, params=payload)
         if resp.status_code == 404:
-            raise LookupError("metrics not found for job {job} on cluster " \
-                              "{cluster}".format(job=job.jobid, cluster=cluster))
+            raise LookupError("metrics not found for job {job} on cluster "
+                              "{cluster}"
+                              .format(job=job.jobid,
+                                      cluster=cluster))
         data = json.loads(resp.text)
 
         # data is a dict with 'results' key that is itself a list of dict with
         # 'series' key that is as well a list of dict, one dict per node/node
-        # association. Each dict has it own list of values. We have to compute the
-        # sum the values for all nodes at every timestampsi, for each metric.
+        # association. Each dict has it own list of values. We have to compute
+        # the sum the values for all nodes at every timestampsi, for each
+        # metric.
         #
         # Ex:
         #
@@ -149,7 +153,7 @@ class MetricsDB(object):
             for pair in serie['values']:
                 timestamp = str(pair[0])
                 value = pair[1]
-                if not results.has_key(timestamp):
+                if timestamp not in results:
                     results[timestamp] = list()
                     for xidx in range(len(metrics)):
                         if xidx == metrics.index(metric):

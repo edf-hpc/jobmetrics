@@ -22,20 +22,21 @@ import ConfigParser
 from StringIO import StringIO
 
 # valid periods with their associated interval group time
-periods = { '1h': '10s',
-            '6h': '30s',
-            '24h': '120s' }
+periods = {'1h': '10s',
+           '6h': '30s',
+           '24h': '120s'}
+
 
 class Conf(object):
 
     def __init__(self, fpath='/etc/jobmetrics/jobmetrics.conf'):
 
-        defaults = StringIO( \
-          "[global]\n" \
-          "cache = /var/cache/jobmetrics/jobmetrics.data\n" \
-          "[influxdb]\n" \
-          "server = http://localhost:8086\n" \
-          "db = graphite\n" )
+        defaults = StringIO(
+            "[global]\n"
+            "cache = /var/cache/jobmetrics/jobmetrics.data\n"
+            "[influxdb]\n"
+            "server = http://localhost:8086\n"
+            "db = graphite\n")
 
         self.conf = ConfigParser.RawConfigParser()
         self.conf.readfp(defaults)
@@ -45,8 +46,8 @@ class Conf(object):
         self.cache_path = self.conf.get('global', 'cache')
         # All sections except influxdb and global are cluster names. So get all
         # sections names minus those two.
-        self.clusters = [ cluster for cluster in self.conf.sections()
-                          if cluster not in ['influxdb', 'global'] ]
+        self.clusters = [cluster for cluster in self.conf.sections()
+                         if cluster not in ['influxdb', 'global']]
 
     def api(self, cluster):
 

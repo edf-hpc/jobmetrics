@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with jobmetrics.  If not, see <http://www.gnu.org/licenses/>.
 
+
 class JobData(object):
 
     def __init__(self, cluster, job, period):
@@ -30,14 +31,14 @@ class JobData(object):
 
     def request(self, db):
 
-        (self.metrics, self.nodeset) = db.get_metrics_results(
-                                           self.cluster,
-                                           self.job,
-                                           ['cpus',
-                                            'cpu-user',
-                                            'cpu-system',
-                                            'memory-pss'],
-                                           self.period)
+        (self.metrics, self.nodeset) = \
+            db.get_metrics_results(self.cluster,
+                                   self.job,
+                                   ['cpus',
+                                    'cpu-user',
+                                    'cpu-system',
+                                    'memory-pss'],
+                                   self.period)
         self.stack_cpu_idle()
 
     def stack_cpu_idle(self):

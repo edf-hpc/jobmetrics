@@ -22,6 +22,7 @@ import json
 import requests
 from requests.exceptions import ConnectionError
 
+
 class SlurmAPI(object):
 
     def __init__(self, conf, cluster, cache):
@@ -53,16 +54,16 @@ class SlurmAPI(object):
             resp = requests.get(url=url)
         except ConnectionError, err:
             # reformat the exception
-            raise ConnectionError("connection error while trying to connect " \
-                                  "to {url}: {error}" \
-                                    .format(url=url, error=err))
+            raise ConnectionError("connection error while trying to connect "
+                                  "to {url}: {error}"
+                                  .format(url=url, error=err))
 
         try:
             json_auth = json.loads(resp.text)
         except ValueError:
             # reformat the exception
-            raise ValueError("not JSON data for GET {url}" \
-                               .format(url=url))
+            raise ValueError("not JSON data for GET {url}"
+                             .format(url=url))
 
         self.auth_enabled = json_auth['enabled']
         self.auth_guest = json_auth['guest']
@@ -72,27 +73,27 @@ class SlurmAPI(object):
         url = "{base}/login".format(base=self.base_url)
         try:
             if self.auth_as_guest is True:
-                payload = { "guest": True }
+                payload = {"guest": True}
             else:
-                payload = { "username": self.auth_login,
-                            "password": self.auth_password }
+                payload = {"username": self.auth_login,
+                           "password": self.auth_password}
             resp = requests.post(url=url, json=payload)
         except ConnectionError, err:
             # reformat the exception
-            raise ConnectionError("connection error while trying to connect " \
-                                  "to {url}: {error}" \
-                                    .format(url=url, error=err))
+            raise ConnectionError("connection error while trying to connect "
+                                  "to {url}: {error}"
+                                  .format(url=url, error=err))
 
         if resp.status_code != 200:
-            raise Exception("login failed with {code} on API {api}" \
-                               .format(code=resp.status_code,
-                                       api=self.base_url))
+            raise Exception("login failed with {code} on API {api}"
+                            .format(code=resp.status_code,
+                                    api=self.base_url))
         try:
             login = json.loads(resp.text)
         except ValueError:
             # reformat the exception
-            raise ValueError("not JSON data for POST {url}" \
-                               .format(url=url))
+            raise ValueError("not JSON data for POST {url}"
+                             .format(url=url))
 
         self.auth_token = login['id_token']
 
@@ -121,8 +122,8 @@ class SlurmAPI(object):
         # First check if the app is configured to log as guest and guest login
         # is enable.
         if self.auth_as_guest and self.auth_guest is False:
-            raise Exception("unable to log as guest to {base}" \
-                              .format(base=self.base_url))
+            raise Exception("unable to log as guest to {base}"
+                            .format(base=self.base_url))
 
         self.login()
         # update token in cache
@@ -136,23 +137,22 @@ class SlurmAPI(object):
 
         self.ensure_auth()
 
-        url = "{base}/job/{job}" \
-                  .format(base=self.base_url,
-                          job=job)
+        url = "{base}/job/{job}".format(base=self.base_url, job=job)
+
         try:
             if self.auth_enabled is True:
-                payload = { 'token': self.auth_token }
+                payload = {'token': self.auth_token}
                 resp = requests.post(url=url, json=payload)
             else:
                 resp = requests.post(url=url)
         except ConnectionError, err:
             # reformat the exception
-            raise ValueError("connection error while trying to connect to " \
+            raise ValueError("connection error while trying to connect to "
                              "{url}: {error}".format(url=url, error=err))
 
         if resp.status_code == 404:
-            raise IndexError("job ID {jobid} not found in API {api}" \
-                               .format(jobid=job, api=self.base_url))
+            raise IndexError("job ID {jobid} not found in API {api}"
+                             .format(jobid=job, api=self.base_url))
 
         if resp.status_code == 403:
             if firsttime:
@@ -167,12 +167,12 @@ class SlurmAPI(object):
                 # We have already tried twice. This means the app is not able
                 # to auth on slurm-web API with current params. Just throw the
                 # error and give-up here.
-                raise Exception("get 403/forbidden from {url} with new token" \
-                                  .format(url=self.base_url))
+                raise Exception("get 403/forbidden from {url} with new token"
+                                .format(url=self.base_url))
         try:
             json_job = json.loads(resp.text)
         except ValueError:
             # reformat the exception
-            raise ValueError("not JSON data for GET {url}" \
-                               .format(url=url))
+            raise ValueError("not JSON data for GET {url}"
+                             .format(url=url))
         return json_job

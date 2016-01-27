@@ -23,6 +23,7 @@ import os
 
 from jobmetrics.ClusterCache import ClusterCache
 
+
 class Cache(object):
 
     def __init__(self, path):
@@ -50,9 +51,9 @@ class Cache(object):
 
         struct = {}
         for cluster, cache in self.cluster_caches.iteritems():
-            struct[cluster] = { 'token': cache.token,
-                                'auth_enabled': cache.auth_enabled,
-                                'auth_guest': cache.auth_guest }
+            struct[cluster] = {'token': cache.token,
+                               'auth_enabled': cache.auth_enabled,
+                               'auth_guest': cache.auth_guest}
 
         with open(self.path, 'w+') as cache_f:
             json.dump(struct, cache_f)
@@ -63,7 +64,7 @@ class Cache(object):
             self.read()
 
         # The cluster cache does not exist yet. Create a new empty cache.
-        if not self.cluster_caches.has_key(cluster):
+        if cluster not in self.cluster_caches:
             self.cluster_caches[cluster] = ClusterCache()
 
         return self.cluster_caches[cluster]
