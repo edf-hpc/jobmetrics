@@ -1,3 +1,4 @@
 usr/share/jobmetrics/restapi
 var/cache/jobmetrics
+var/log/jobmetrics
 etc/jobmetrics

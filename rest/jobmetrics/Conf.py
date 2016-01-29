@@ -34,6 +34,7 @@ class Conf(object):
         defaults = StringIO(
             "[global]\n"
             "cache = /var/cache/jobmetrics/jobmetrics.data\n"
+            "log = /var/log/jobmetrics/jobmetrics.log\n"
             "[influxdb]\n"
             "server = http://localhost:8086\n"
             "db = graphite\n")
@@ -44,6 +45,7 @@ class Conf(object):
         self.influxdb_server = self.conf.get('influxdb', 'server')
         self.influxdb_db = self.conf.get('influxdb', 'db')
         self.cache_path = self.conf.get('global', 'cache')
+        self.log_path = self.conf.get('global', 'log')
         # All sections except influxdb and global are cluster names. So get all
         # sections names minus those two.
         self.clusters = [cluster for cluster in self.conf.sections()

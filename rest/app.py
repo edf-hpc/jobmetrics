@@ -22,6 +22,10 @@
 from flask import Flask, jsonify, abort
 from requests.exceptions import ConnectionError
 
+import logging
+from logging.handlers import TimedRotatingFileHandler
+from logging import Formatter
+
 from jobmetrics.Conf import Conf, periods
 from jobmetrics.Cache import Cache
 from jobmetrics.SlurmAPI import SlurmAPI
@@ -29,13 +33,14 @@ from jobmetrics.MetricsDB import MetricsDB
 from jobmetrics.JobParams import JobParams
 from jobmetrics.JobData import JobData
 
-app = Flask(__name__)
+app = Flask('jobmetrics')
 
 
 @app.errorhandler(500)
 def internal_error(error):
     if not hasattr(error, 'description'):
         error.description = {'error': 'unknown internal error'}
+    app.logger.error("error 500: %s", error.description['error'])
     response = jsonify(error.description)
     response.status_code = 500
     return response
@@ -43,9 +48,27 @@ def internal_error(error):
 
 @app.errorhandler(404)
 def page_not_found(error):
+    app.logger.error("error 404: %s", error.description['error'])
     response = jsonify(error.description)
     response.status_code = 404
     return response
+
+
+def init_logger(conf):
+
+    log_h = TimedRotatingFileHandler(conf.log_path,
+                                     when='D',
+                                     interval=1,
+                                     backupCount=10)
+    log_h.setLevel(logging.INFO)
+    log_h.setFormatter(Formatter('%(asctime)s %(levelname)s: %(message)s'))
+
+    # Remove all other handlers and disable propagation to ancestor logger in
+    # order to avoid polluting HTTP server error log with app specific logs.
+    app.logger.propagate = False
+    app.logger.handlers = []
+    app.logger.addHandler(log_h)
+    app.logger.setLevel(logging.INFO)
 
 
 @app.route('/metrics/<cluster>/<int:jobid>', defaults={'period': '1h'})
@@ -53,11 +76,16 @@ def page_not_found(error):
 def metrics(cluster, jobid, period):
 
     conf = Conf()
+
+    init_logger(conf)
+
     cache = Cache(conf.cache_path)
     cluster_cache = cache.get(cluster)
     slurm_api = SlurmAPI(conf, cluster, cluster_cache)
 
     job = JobParams(jobid)
+
+    app.logger.info("GET cluster %s jobid %d" % (cluster, jobid))
 
     try:
         job.request_params(slurm_api)

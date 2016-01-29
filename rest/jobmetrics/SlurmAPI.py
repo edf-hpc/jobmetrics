@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with jobmetrics.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
+logger = logging.getLogger(__name__)
 import json
 import requests
 from requests.exceptions import ConnectionError
@@ -70,7 +72,10 @@ class SlurmAPI(object):
 
     def login(self):
 
+        logger.info("login to %s for new token", self.base_url)
+
         url = "{base}/login".format(base=self.base_url)
+
         try:
             if self.auth_as_guest is True:
                 payload = {"guest": True}
@@ -159,6 +164,7 @@ class SlurmAPI(object):
                 # We probably get this error because of invalidated token.
                 # Invalidate cache, trigger check_auth() and call this method
                 # again.
+                logger.info("token in cache invalidated")
                 self.auth_token = None
                 self.auth_enabled = None
                 self.cache.invalidate()

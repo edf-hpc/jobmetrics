@@ -19,6 +19,7 @@ set -e
 case "$1" in
     configure)
         chown www-data: /var/cache/jobmetrics
+        chown www-data: /var/log/jobmetrics
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
