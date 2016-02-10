@@ -23,6 +23,7 @@ import json
 from ClusterShell.NodeSet import NodeSet
 
 from jobmetrics.Conf import periods
+from jobmetrics.Profiler import Profiler
 
 
 class MetricsDB(object):
@@ -42,6 +43,8 @@ class MetricsDB(object):
 
         time_group = periods[period]
 
+        profiler = Profiler()
+
         metrics_s = "\"" + "\", \"".join(metrics) + "\""
         req = "select mean(value) from {metrics} " \
               "where time > now() - {period} " \
@@ -55,12 +58,17 @@ class MetricsDB(object):
                       time_group=time_group)
 
         payload = {'db': self.db, 'q': req, 'epoch': 'ms'}
+
+        profiler.start('metrics_req')
         resp = requests.get(url=self.url, params=payload)
+        profiler.stop('metrics_req')
         if resp.status_code == 404:
             raise LookupError("metrics not found for job {job} on cluster "
                               "{cluster}"
                               .format(job=job.jobid,
                                       cluster=cluster))
+
+        profiler.start('metrics_proc')
         data = json.loads(resp.text)
 
         # data is a dict with 'results' key that is itself a list of dict with
@@ -170,4 +178,5 @@ class MetricsDB(object):
                     else:
                         results[timestamp][metrics.index(metric)] += value
 
+        profiler.stop('metrics_proc')
         return (results, nodeset)

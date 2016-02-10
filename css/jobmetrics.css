@@ -1,11 +1,13 @@
 * {	padding: 0; margin: 0; vertical-align: top; }
 
 html {
-	height:100%;
+	height: 100%;
 }
+
 body {
 	font: 18px/1.5em "proxima-nova", Helvetica, Arial, sans-serif;
-	height:100%;
+	height: 100%;
+	overflow: hidden;
 }
 
 a {	color: #069; }
@@ -81,20 +83,24 @@ input[type=checkbox] {
 	border-color: #777;
 }
 
-#jobinfo {
-	display: none;
-	position: absolute;
-	top: 50px;
-	width: 400px;
-	left: 50%;
-	margin-left:-200px;
-	padding: 5px 0 5px 30px;
-        font-size: 12px;
-	background-color: #ccc;
-	border-style: solid;
-	border-width: 1px;
-	border-color: #777;
+#debug-button {
+	position: fixed;
+	bottom: 0px;
+	right: 0px;
 	z-index: 1;
+}
+
+#debug-modal-content {
+	padding-left: 50px;
+}
+
+#debug-modal-content h5 {
+	font-weight: bold;
+}
+
+.debug-key {
+	display: inline-block;
+	width: 100px;
 }
 
 #error {

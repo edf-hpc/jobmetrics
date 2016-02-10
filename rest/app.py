@@ -32,6 +32,7 @@ from jobmetrics.SlurmAPI import SlurmAPI
 from jobmetrics.MetricsDB import MetricsDB
 from jobmetrics.JobParams import JobParams
 from jobmetrics.JobData import JobData
+from jobmetrics.Profiler import Profiler
 
 app = Flask('jobmetrics')
 
@@ -82,7 +83,7 @@ def metrics(cluster, jobid, period):
     cache = Cache(conf.cache_path)
     cluster_cache = cache.get(cluster)
     slurm_api = SlurmAPI(conf, cluster, cluster_cache)
-
+    profiler = Profiler()
     job = JobParams(jobid)
 
     app.logger.info("GET cluster %s jobid %d" % (cluster, jobid))
@@ -110,7 +111,10 @@ def metrics(cluster, jobid, period):
         db = MetricsDB(conf)
         job_data = JobData(cluster, job, period)
         job_data.request(db)
-        return jsonify(job_data.dump())
+        resp = {}
+        resp['data'] = job_data.dump()
+        resp['debug'] = profiler.dump()
+        return jsonify(resp)
     except Exception, err:
         abort(500, {'error': str(err)})
 

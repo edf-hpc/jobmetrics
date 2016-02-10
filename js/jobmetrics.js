@@ -21,6 +21,7 @@ var cluster = null;
 var job = null;
 var period = '1h'; // default period
 var plot = null;
+var debug = false;
 var updateInterval = 10 * 1000; // 10 seconds
 var update_timeout = null;
 
@@ -104,14 +105,39 @@ function init_period_links() {
     $('#period-6h').click(function(){ set_period('6h'); return false; });
     $('#period-24h').click(function(){ set_period('24h'); return false; });
 }
-function update_job_info(job_info) {
-    $('#jobinfo').empty();
-    content = "<ul>" +
-              "<li>job nodes: " + job_info['nodes'] + "</li>" +
-              "<li>metrics producers: " + job_info['producers'] + "</li>" +
-              "<li>mute nodes: " + job_info['mutes'] + "</li>" +
-              "</ul>";
-    $('#jobinfo').append(content);
+
+function init_debug_zone() {
+
+    if (debug === true) {
+        $('#debug-button').empty();
+        $('#debug-button').append('<img src="static/debug.png"/>');
+        $('#debug-button').click(function() {
+            $('#debug-modal').modal('toggle')
+        });
+    }
+}
+
+function update_debug_modal(debug_info) {
+
+    $('#debug-modal-content').empty();
+    content = "<h5>metadata</h5>" +
+              "<ul>";
+
+    Object.keys(debug_info['metadata']).forEach(function (key) {
+        content += "<li><span class='debug-key'>" + key + ":</span> "
+                 + debug_info['metadata'][key] + "</li>";
+    });
+
+    content += "</ul>" +
+               "<h5>timers</h5>" +
+               "<ul>";
+
+    Object.keys(debug_info['timers']).forEach(function (key) {
+        content += "<li><span class='debug-key'>"+ key + ":</span> "
+                 + (debug_info['timers'][key]).toFixed(3) + " s</li>";
+    });
+
+    $('#debug-modal-content').append(content);
 }
 
 function show_error(status, error) {
@@ -141,7 +167,7 @@ function update(options) {
         update_timeout = setTimeout(function() {
             update(options);
           }, updateInterval);
-        update_job_info(result['job']);
+        update_debug_modal(result['debug']);
       })
       .fail( function(jqXHR, textStatus, errorThrown) {
         show_error(jqXHR.status, $.parseJSON(jqXHR.responseText));
@@ -151,26 +177,22 @@ function update(options) {
 
 function set_title() {
 
-
     $('#header').empty();
     $('#header').append("<h2>HPC metrics:&nbsp;</h2>");
-    $('h2').append("cluster " + cluster,
-                   " <a id='jobid' href='#'>job " + job + "</a>");
+    $('h2').append("cluster " + cluster +" job " + job);
     $('title').empty();
     $('title').append("HPC metrics: job " + job);
-    $('#jobid').click( function() {
-        $('#jobinfo').toggle();
-        console.log('toggle!');
-        return false;
-    });
+
 }
 
 function draw_diagram() {
 
     job = getUrlParameter('job');
     cluster = getUrlParameter('cluster');
+    debug = getUrlParameter('debug');
 
     init_period_links();
+    init_debug_zone();
     set_title(cluster, job);
 
     var options = {

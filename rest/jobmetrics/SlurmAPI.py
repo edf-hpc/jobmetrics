@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 import json
 import requests
 from requests.exceptions import ConnectionError
+from jobmetrics.Profiler import Profiler
 
 
 class SlurmAPI(object):
@@ -140,16 +141,21 @@ class SlurmAPI(object):
            JSON data sent by the API.
         """
 
+        profiler = Profiler()
+        profiler.start('slurm_auth')
         self.ensure_auth()
+        profiler.stop('slurm_auth')
 
         url = "{base}/job/{job}".format(base=self.base_url, job=job)
 
         try:
+            profiler.start('slurm_req')
             if self.auth_enabled is True:
                 payload = {'token': self.auth_token}
                 resp = requests.post(url=url, json=payload)
             else:
                 resp = requests.post(url=url)
+            profiler.stop('slurm_req')
         except ConnectionError, err:
             # reformat the exception
             raise ValueError("connection error while trying to connect to "

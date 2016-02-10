@@ -18,6 +18,8 @@
 # You should have received a copy of the GNU General Public License
 # along with jobmetrics.  If not, see <http://www.gnu.org/licenses/>.
 
+from jobmetrics.Profiler import Profiler
+
 
 class JobData(object):
 
@@ -40,6 +42,10 @@ class JobData(object):
                                     'memory-pss'],
                                    self.period)
         self.stack_cpu_idle()
+        profiler = Profiler()
+        profiler.meta('producers', str(self.nodeset))
+        profiler.meta('nodes', str(self.job.nodeset))
+        profiler.meta('mutes', str(self.job.nodeset - self.nodeset))
 
     def stack_cpu_idle(self):
         """Compute the sum of cpu usages in metrics dict in parameters to stack
@@ -50,11 +56,5 @@ class JobData(object):
             values.insert(3, values[0]*100 - values[1] - values[2])
 
     def dump(self):
-
-        datahash = {}
-        datahash['data'] = self.metrics
-        datahash['job'] = {}
-        datahash['job']['producers'] = str(self.nodeset)
-        datahash['job']['nodes'] = str(self.job.nodeset)
-        datahash['job']['mutes'] = str(self.job.nodeset - self.nodeset)
+        return self.metrics
         return datahash
