@@ -66,16 +66,15 @@ class Profiler(object):
 
     def start(self, timer):
 
-        if timer not in self.timers:
-            self.starts[timer] = time.clock()
-            self.timers[timer] = float(-1)
+        self.starts[timer] = time.time()
+        self.timers[timer] = float(-1)
 
     def stop(self, timer):
 
         if timer not in self.timers:
             return  # ignore silently
 
-        self.timers[timer] = time.clock() - self.starts[timer]
+        self.timers[timer] = time.time() - self.starts[timer]
 
     def dump(self):
 
