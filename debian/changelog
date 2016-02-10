@@ -1,3 +1,9 @@
+jobmetrics (0.2.1) calibre9; urgency=medium
+
+  * Fix profing timers values and behaviour
+
+ -- Rémi Palancher <remi-externe.palancher@edf.fr>  Wed, 10 Feb 2016 11:21:18 +0100
+
 jobmetrics (0.2.0) calibre9; urgency=medium
 
   * Add period selectors to view last 1h, 6h or 24h
