@@ -159,6 +159,24 @@ function update(options) {
         if (plot === null) {
             // initialize on first call if null
             plot = $.plot("#placeholder", process_metrics_result(result), options);
+
+            // Add labels to both Y-axis. Their absolute positions are
+            // calculated based on their width with combination of
+            // top/margin-top to set their height. They are also 'transformed'
+            // in the CSS to rotate them by 90 or -90°.
+            var yaxis_cpu_label = $("<div class='axisLabel yaxisLabel yaxis1Label'></div>")
+                                  .text("CPU usage (%)")
+                                  .appendTo("#placeholder");
+
+            yaxis_cpu_label.css("margin-top", yaxis_cpu_label.width() / 2 - 20);
+            yaxis_cpu_label.css("left", "-8px");
+
+            var yaxis_mem_label = $("<div class='axisLabel yaxisLabel yaxis2Label'></div>")
+                                  .text("Memory consumption (MB)")
+                                  .appendTo("#placeholder");
+
+            yaxis_mem_label.css("margin-top", -yaxis_mem_label.width() / 2);
+            yaxis_mem_label.css("right", -yaxis_mem_label.width() - 10);
         }
         plot.setData(process_metrics_result(result['data']));
         // Since the axes don't change, we don't need to call plot.setupGrid()
@@ -196,6 +214,13 @@ function draw_diagram() {
     set_title(cluster, job);
 
     var options = {
+        grid: {
+          labelMargin: 10,
+          margin: {
+            left: 20,
+            right: 20
+          },
+        },
         lines: {
             lineWidth: 1
         },
