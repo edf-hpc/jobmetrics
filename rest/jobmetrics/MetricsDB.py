@@ -57,6 +57,8 @@ class MetricsDB(object):
                       job=job.jobid,
                       time_group=time_group)
 
+        profiler.meta('metrics_req', req)
+
         payload = {'db': self.db, 'q': req, 'epoch': 'ms'}
 
         profiler.start('metrics_req')
