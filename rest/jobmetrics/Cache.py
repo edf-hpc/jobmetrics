@@ -40,7 +40,13 @@ class Cache(object):
             return
 
         with open(self.path, 'r') as cache_f:
-            struct = json.load(cache_f)
+            try:
+                struct = json.load(cache_f)
+            except ValueError:
+                # File exists but does not contain json data (probably empty).
+                # In this case, return None so that cluster_caches dict stays
+                # empty. It will be filled then with new data.
+                return None
             for cluster, data in struct.iteritems():
                 self.cluster_caches[cluster] = \
                     ClusterCache(data['token'],
