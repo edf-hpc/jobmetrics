@@ -58,4 +58,3 @@ class JobData(object):
 
     def dump(self):
         return self.metrics
-        return datahash
