@@ -40,11 +40,13 @@ app = Flask('jobmetrics')
 # a browser but the JS client doesn't like it
 app.url_map.redirect_defaults = False
 
+
 @app.errorhandler(500)
 def internal_error(error):
     if not hasattr(error, 'description'):
         error.description = {'error': 'unknown internal error'}
     app.logger.error("error 500: %s", error.description['error'])
+    app.logger.exception(error)
     response = jsonify(error.description)
     response.status_code = 500
     return response
@@ -100,7 +102,7 @@ def metrics(cluster, jobid, period):
 
     try:
         job.request_params(slurm_api)
-    except IndexError, err:
+    except IndexError as err:
         # IndexError here means the job is unknown according to Slurm API.
         # Return 404 with error message
         abort(404, {'error': str(err)})
@@ -108,7 +110,7 @@ def metrics(cluster, jobid, period):
         # ValueError means the Slurm API responded something that was not
         # JSON formatted. ConnectionError means there was a problem while
         # connection to the slurm API. Return 500 with error message.
-        abort(500, {'error': str(err)})
+        abort(500, {'error': err.message})
 
     # Write the cache at this point since it will not be modified then
     cache.write()
@@ -125,7 +127,8 @@ def metrics(cluster, jobid, period):
         resp['data'] = job_data.dump()
         resp['debug'] = profiler.dump()
         return jsonify(resp)
-    except Exception, err:
+    except Exception as err:
+        app.logger.exception(err)
         abort(500, {'error': str(err)})
 
 if __name__ == '__main__':
