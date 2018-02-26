@@ -35,6 +35,9 @@ class Conf(object):
             "[global]\n"
             "cache = /var/cache/jobmetrics/jobmetrics.data\n"
             "log = /var/log/jobmetrics/jobmetrics.log\n"
+            "tls_verify = true\n"
+            "ca_filepath = /etc/ssl/certs/ca-certificates.crt\n"
+            "debug = false\n"
             "[influxdb]\n"
             "server = http://localhost:8086\n"
             "db = graphite\n")
@@ -46,6 +49,9 @@ class Conf(object):
         self.influxdb_db = self.conf.get('influxdb', 'db')
         self.cache_path = self.conf.get('global', 'cache')
         self.log_path = self.conf.get('global', 'log')
+        self.tls_verify = self.conf.getboolean('global', 'tls_verify')
+        self.ca_filepath = self.conf.get('global', 'ca_filepath')
+        self.debug = self.conf.getboolean('global', 'debug')
         # All sections except influxdb and global are cluster names. So get all
         # sections names minus those two.
         self.clusters = [cluster for cluster in self.conf.sections()
