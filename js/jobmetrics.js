@@ -78,7 +78,7 @@ function process_metrics_result(result) {
           }
         },
         { data: cpu_user,
-          color: "rgba(245,121,0,1)",
+          color: "rgba(204,153,255,1)",
           label: "CPU user %",
           stack: true,
           lines: {
