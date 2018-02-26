@@ -35,41 +35,19 @@ class SlurmAPI(object):
         self.cache = cache
         self.auth_login = conf.login(cluster)
         self.auth_password = conf.password(cluster)
+        self.auth_enabled = conf.auth_enabled(cluster)
 
         if cache.empty is None:
             self.auth_token = None
-            self.auth_enabled = None
-            self.auth_guest = None
         else:
             self.auth_token = cache.token
-            self.auth_enabled = cache.auth_enabled
-            self.auth_guest = cache.auth_guest
 
     @property
     def auth_as_guest(self):
 
         return self.auth_login == 'guest'
 
-    def check_auth(self):
 
-        url = "{base}/authentication".format(base=self.base_url)
-        try:
-            resp = requests.get(url=url)
-        except ConnectionError, err:
-            # reformat the exception
-            raise ConnectionError("connection error while trying to connect "
-                                  "to {url}: {error}"
-                                  .format(url=url, error=err))
-
-        try:
-            json_auth = json.loads(resp.text)
-        except ValueError:
-            # reformat the exception
-            raise ValueError("not JSON data for GET {url}"
-                             .format(url=url))
-
-        self.auth_enabled = json_auth['enabled']
-        self.auth_guest = json_auth['guest']
 
     def login(self):
 
@@ -110,14 +88,6 @@ class SlurmAPI(object):
         # valid according to slurm-web, the error will be handled then.
         if self.auth_token is not None:
             return
-
-        # if auth_enabled is None, it means the cache was not able to tell us.
-        # In this case, we have to check ourselves.
-        if self.auth_enabled is None:
-            self.check_auth()
-            # update the cache with new data
-            self.cache.auth_enabled = self.auth_enabled
-            self.cache.auth_guest = self.auth_guest
 
         # if the auth is disable, go on with it.
         if self.auth_enabled is False:

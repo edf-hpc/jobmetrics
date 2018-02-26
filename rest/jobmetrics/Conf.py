@@ -61,6 +61,14 @@ class Conf(object):
 
         return self.conf.get(cluster, 'api')
 
+    def auth_enabled(self, cluster):
+
+        # use Authentication on this cluster, deafult to true
+        try:
+            return self.conf.getboolean(cluster, 'auth_enabled')
+        except ConfigParser.NoOptionError:
+            return True
+
     def login(self, cluster):
 
         # by default, if no login is provided in conf and slurm-web
