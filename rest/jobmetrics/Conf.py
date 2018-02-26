@@ -67,7 +67,7 @@ class Conf(object):
         # authentication is enabled, the app tries to login as guest.
         try:
             return self.conf.get(cluster, 'login')
-        except ConfigParser.NoOptionError as err:
+        except ConfigParser.NoOptionError:
             return 'guest'
 
     def password(self, cluster):
@@ -75,6 +75,6 @@ class Conf(object):
         # password is optional (typically, it is useless with guest account)
         # with no sane default.
         try:
-            self.conf.get(cluster, 'password')
-        except ConfigParser.NoOptionError as err:
+            return self.conf.get(cluster, 'password')
+        except ConfigParser.NoOptionError:
             return None
