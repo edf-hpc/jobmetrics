@@ -35,7 +35,10 @@ from jobmetrics.JobData import JobData
 from jobmetrics.Profiler import Profiler
 
 app = Flask('jobmetrics')
-
+# By default flask redirects "metrics/CLUSTER/JOB/1h" to
+# "metrics/CLUSTER/JOB" since 1h is the default. This is nice on
+# a browser but the JS client doesn't like it
+app.url_map.redirect_defaults = False
 
 @app.errorhandler(500)
 def internal_error(error):
