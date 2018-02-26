@@ -45,6 +45,7 @@ function process_metrics_result(result) {
     var cpu_user = new Array;
     var cpu_system = new Array;
     var cpu_idle = new Array;
+    var cpu_iowait = new Array;
     var memory_pss = new Array;
     var utc_offset_msec = new Date().getTimezoneOffset() * 60 * 1000;
 
@@ -53,13 +54,23 @@ function process_metrics_result(result) {
         cpu_user.push([timestamp, values[1]]);
         cpu_system.push([timestamp, values[2]]);
         cpu_idle.push([timestamp, values[3]]);
-        memory_pss.push([timestamp, values[4]/(1024*1024)]);
+        cpu_iowait.push([timestamp, values[4]]);
+        memory_pss.push([timestamp, values[5]/(1024*1024)]);
     });
 
     return [
         { data: cpu_system,
           color: "rgba(204,0,0,1)",
           label: "CPU system %",
+          stack: true,
+          lines: {
+            show: true,
+            fill: true,
+          }
+        },
+        { data: cpu_iowait,
+          color: "rgba(255,204,0,1)",
+          label: "CPU I/O wait %",
           stack: true,
           lines: {
             show: true,

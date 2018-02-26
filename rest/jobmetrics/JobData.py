@@ -39,6 +39,7 @@ class JobData(object):
                                    ['cpus',
                                     'cpu-user',
                                     'cpu-system',
+                                    'cpu-iowait',
                                     'memory-pss'],
                                    self.period)
         self.stack_cpu_idle()
