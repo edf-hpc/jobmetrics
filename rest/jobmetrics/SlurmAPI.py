@@ -36,6 +36,13 @@ class SlurmAPI(object):
         self.auth_login = conf.login(cluster)
         self.auth_password = conf.password(cluster)
         self.auth_enabled = conf.auth_enabled(cluster)
+        if conf.tls_verify:
+            self.ca_filepath = conf.ca_filepath
+        else:
+            self.ca_filepath = False
+
+        logger.debug("Cluster %s (ca_filepath: %s)",
+                     self.cluster, self.ca_filepath)
 
         if cache.empty is None:
             self.auth_token = None
@@ -47,7 +54,10 @@ class SlurmAPI(object):
 
         return self.auth_login == 'guest'
 
+    @property
+    def auth_as_trusted_source(self):
 
+        return self.auth_login == 'trusted_source'
 
     def login(self):
 
@@ -58,28 +68,37 @@ class SlurmAPI(object):
         try:
             if self.auth_as_guest is True:
                 payload = {"guest": True}
+            elif self.auth_as_trusted_source is True:
+                payload = {"trusted_source": True}
             else:
-                payload = {"username": self.auth_login,
+                logger.debug("Trying to login with username: %s",
+                             self.auth_login)
+                if self.auth_password is None:
+                    logger.warn("No password provided")
+                payload = {"login": self.auth_login,
                            "password": self.auth_password}
-            resp = requests.post(url=url, json=payload)
-        except ConnectionError, err:
+            resp = requests.post(url=url,
+                                 json=payload,
+                                 verify=self.ca_filepath)
+        except ConnectionError as err:
+            logger.warn("Connection Error args: %s", err.args)
             # reformat the exception
             raise ConnectionError("connection error while trying to connect "
                                   "to {url}: {error}"
-                                  .format(url=url, error=err))
+                                  .format(url=url, error=err.strerror))
 
         if resp.status_code != 200:
             raise Exception("login failed with {code} on API {api}"
                             .format(code=resp.status_code,
                                     api=self.base_url))
         try:
-            login = json.loads(resp.text)
+            data = json.loads(resp.text)
         except ValueError:
             # reformat the exception
             raise ValueError("not JSON data for POST {url}"
                              .format(url=url))
 
-        self.auth_token = login['id_token']
+        self.auth_token = data['id_token']
 
     def ensure_auth(self):
 
@@ -94,13 +113,6 @@ class SlurmAPI(object):
             return
 
         # At this point, auth is enabled and we do not have token.
-
-        # First check if the app is configured to log as guest and guest login
-        # is enable.
-        if self.auth_as_guest and self.auth_guest is False:
-            raise Exception("unable to log as guest to {base}"
-                            .format(base=self.base_url))
-
         self.login()
         # update token in cache
         self.cache.token = self.auth_token
@@ -121,12 +133,14 @@ class SlurmAPI(object):
         try:
             profiler.start('slurm_req')
             if self.auth_enabled is True:
-                payload = {'token': self.auth_token}
-                resp = requests.post(url=url, json=payload)
+                headers = {'Authorization': "Bearer %s" % self.auth_token}
+                resp = requests.get(url=url,
+                                    headers=headers,
+                                    verify=self.ca_filepath)
             else:
-                resp = requests.post(url=url)
+                resp = requests.get(url=url, verify=self.ca_filepath)
             profiler.stop('slurm_req')
-        except ConnectionError, err:
+        except ConnectionError as err:
             # reformat the exception
             raise ValueError("connection error while trying to connect to "
                              "{url}: {error}".format(url=url, error=err))
@@ -136,6 +150,7 @@ class SlurmAPI(object):
                              .format(jobid=job, api=self.base_url))
 
         if resp.status_code == 403:
+            logger.debug("Error 403 received: %s", resp.content)
             if firsttime:
                 # We probably get this error because of invalidated token.
                 # Invalidate cache, trigger check_auth() and call this method
