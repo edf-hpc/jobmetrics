@@ -161,8 +161,8 @@ function update(options) {
 
     if (update_timeout != null)
         clearTimeout(update_timeout);
-
-    api = "/jobmetrics-restapi/metrics/" + cluster + "/" + job + "/" + period;
+    base_api = "/jobmetrics-restapi"
+    api = base_api + "/metrics/" + cluster + "/" + job + "/" + period;
     $.ajax({
         url: api,
         dataType: "json" })

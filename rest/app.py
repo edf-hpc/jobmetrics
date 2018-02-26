@@ -22,6 +22,8 @@
 from flask import Flask, jsonify, abort
 from requests.exceptions import ConnectionError
 
+import os
+
 import logging
 from logging.handlers import TimedRotatingFileHandler
 from logging import Formatter
@@ -33,6 +35,11 @@ from jobmetrics.MetricsDB import MetricsDB
 from jobmetrics.JobParams import JobParams
 from jobmetrics.JobData import JobData
 from jobmetrics.Profiler import Profiler
+
+if 'JOBMETRICS_CONF_FILE' in os.environ.keys():
+    conf_path = os.environ.get('JOBMETRICS_CONF_FILE')
+else:
+    conf_path = None
 
 app = Flask('jobmetrics')
 # By default flask redirects "metrics/CLUSTER/JOB/1h" to
@@ -87,8 +94,10 @@ def init_logger(conf):
 @app.route('/metrics/<cluster>/<int:jobid>', defaults={'period': '1h'})
 @app.route('/metrics/<cluster>/<int:jobid>/<period>')
 def metrics(cluster, jobid, period):
-
-    conf = Conf()
+    if conf_path is None:
+        conf = Conf()
+    else:
+        conf = Conf(conf_path)
 
     init_logger(conf)
 
