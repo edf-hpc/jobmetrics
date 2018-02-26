@@ -64,15 +64,22 @@ def init_logger(conf):
                                      when='D',
                                      interval=1,
                                      backupCount=10)
-    log_h.setLevel(logging.INFO)
-    log_h.setFormatter(Formatter('%(asctime)s %(levelname)s: %(message)s'))
+    if conf.debug:
+        log_h.setLevel(logging.DEBUG)
+    else:
+        log_h.setLevel(logging.INFO)
+    log_h.setFormatter(Formatter(
+        '%(asctime)s %(filename)s:%(lineno)d %(levelname)s: %(message)s'))
 
     # Remove all other handlers and disable propagation to ancestor logger in
     # order to avoid polluting HTTP server error log with app specific logs.
     app.logger.propagate = False
     app.logger.handlers = []
     app.logger.addHandler(log_h)
-    app.logger.setLevel(logging.INFO)
+    if conf.debug:
+        app.logger.setLevel(logging.DEBUG)
+    else:
+        app.logger.setLevel(logging.INFO)
 
 
 @app.route('/metrics/<cluster>/<int:jobid>', defaults={'period': '1h'})
