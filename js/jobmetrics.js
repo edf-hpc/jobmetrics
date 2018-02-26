@@ -187,7 +187,7 @@ function update(options) {
                                   .appendTo("#placeholder");
 
             yaxis_mem_label.css("margin-top", -yaxis_mem_label.width() / 2);
-            yaxis_mem_label.css("right", -yaxis_mem_label.width() - 10);
+            yaxis_mem_label.css("right", -yaxis_mem_label.height() - 10);
         }
         plot.setData(process_metrics_result(result['data']));
         // Since the axes don't change, we don't need to call plot.setupGrid()
