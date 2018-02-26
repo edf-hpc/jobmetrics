@@ -218,7 +218,7 @@ function draw_diagram() {
 
     job = getUrlParameter('job');
     cluster = getUrlParameter('cluster');
-    debug = getUrlParameter('debug');
+    debug = ( getUrlParameter('debug') === 'true' );
 
     init_period_links();
     init_debug_zone();
