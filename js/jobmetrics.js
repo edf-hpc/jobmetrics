@@ -183,7 +183,7 @@ function update(options) {
             yaxis_cpu_label.css("left", "-8px");
 
             var yaxis_mem_label = $("<div class='axisLabel yaxisLabel yaxis2Label'></div>")
-                                  .text("Memory consumption (MB)")
+                                  .text("Memory consumption (MiB)")
                                   .appendTo("#placeholder");
 
             yaxis_mem_label.css("margin-top", -yaxis_mem_label.width() / 2);
