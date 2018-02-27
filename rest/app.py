@@ -19,7 +19,7 @@
 # along with jobmetrics.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from flask import Flask, jsonify, abort
+from flask import Flask, jsonify, abort, request
 from requests.exceptions import ConnectionError
 
 import os
@@ -36,10 +36,6 @@ from jobmetrics.JobParams import JobParams
 from jobmetrics.JobData import JobData
 from jobmetrics.Profiler import Profiler
 
-if 'JOBMETRICS_CONF_FILE' in os.environ.keys():
-    conf_path = os.environ.get('JOBMETRICS_CONF_FILE')
-else:
-    conf_path = None
 
 app = Flask('jobmetrics')
 # By default flask redirects "metrics/CLUSTER/JOB/1h" to
@@ -94,10 +90,12 @@ def init_logger(conf):
 @app.route('/metrics/<cluster>/<int:jobid>', defaults={'period': '1h'})
 @app.route('/metrics/<cluster>/<int:jobid>/<period>')
 def metrics(cluster, jobid, period):
-    if conf_path is None:
-        conf = Conf()
+    if 'JOBMETRICS_CONF_FILE' in request.environ.keys():
+        conf = Conf(request.environ['JOBMETRICS_CONF_FILE'])
+    elif 'JOBMETRICS_CONF_FILE' in os.environ.keys():
+        conf = Conf(os.environ.get('JOBMETRICS_CONF_FILE'))
     else:
-        conf = Conf(conf_path)
+        conf = Conf()
 
     init_logger(conf)
 
