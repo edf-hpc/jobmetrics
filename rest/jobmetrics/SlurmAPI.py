@@ -1,7 +1,7 @@
 #!flask/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 EDF SA
+# Copyright (C) 2015-2018 EDF SA
 #
 # This file is part of jobmetrics.
 #
