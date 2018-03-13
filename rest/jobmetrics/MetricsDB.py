@@ -1,7 +1,7 @@
 #!flask/bin/python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2015-2016 EDF SA
+# Copyright (C) 2015-2018 EDF SA
 #
 # This file is part of jobmetrics.
 #
@@ -17,6 +17,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with jobmetrics.  If not, see <http://www.gnu.org/licenses/>.
+
+import logging
+logger = logging.getLogger(__name__)
 
 import requests
 import json
@@ -71,7 +74,8 @@ class MetricsDB(object):
                                       cluster=cluster))
 
         profiler.start('metrics_proc')
-        data = json.loads(resp.text)
+
+        json_data = json.loads(resp.text)
 
         # data is a dict with 'results' key that is itself a list of dict with
         # 'series' key that is as well a list of dict, one dict per node/node
@@ -148,33 +152,34 @@ class MetricsDB(object):
         #
         #   ]}
         # ]}
-        series = data['results'][0]['series']
 
         results = {}
         nodeset = NodeSet()
+        for result in json_data['results']:
+            if 'series' in result:
+                series = result['series']
+            else:
+                logger.warn("No series in one result for query: %s", req)
+                series = {}
 
-        for serie in series:
-            metric = serie['name']
-            node = serie['tags']['node'].encode('utf-8')
+            for serie in series:
+                metric = serie['name']
+                node = serie['tags']['node'].encode('utf-8')
 
-            if node not in nodeset:
-                nodeset.update(node)
+                if node not in nodeset:
+                    nodeset.update(node)
 
-            for pair in serie['values']:
-                timestamp = str(pair[0])
-                value = pair[1]
-                if timestamp not in results:
-                    results[timestamp] = list()
-                    for xidx in range(len(metrics)):
-                        if xidx == metrics.index(metric):
-                            results[timestamp].append(value)
-                        else:
-                            results[timestamp].append(0)
-                else:
-                    # The cpus/nodes metrics can be produced by several batch
-                    # servers and thus returned multiple times by InfluxDB
-                    # server in the result of the request. We must take care to
-                    # not add the multiple results of this metric here!
+                for pair in serie['values']:
+                    timestamp = str(pair[0])
+                    value = pair[1]
+                    if timestamp not in results:
+                        # init all values for timestamp to 0
+                        results[timestamp] = [0]*len(metrics)
+                    # The cpus/nodes metrics can be produced by several
+                    # batch servers and thus returned multiple times by
+                    # InfluxDB server in the result of the request. We
+                    # must take care to not add the multiple results of
+                    # this metric here!
                     if metric in ['cpus', 'nodes']:
                         results[timestamp][metrics.index(metric)] = value
                     else:
