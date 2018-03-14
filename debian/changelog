@@ -1,3 +1,34 @@
+jobmetrics (1.0.0) calibre9; urgency=medium
+
+  [ Rémi Palancher ]
+  * Add influxdb request in debug metadata
+  * avoid crash when cache file is empty
+
+  [ Thomas HAMEL ]
+  * Add I/O wait to metrics fetched
+  * Use purple for user cpu usage
+  * Use unambiguous units for storage (MiB)
+  * Realign Y axis label
+  * Fix debug mode test
+  * Don't redirect to simpler URL on API
+  * New config options: debug, tls_verify, ca_filepath
+  * More debug when configured
+  * Fix exception logging
+  * Syntax fixes
+  * Remove dead code
+  * Don't guess auth_enabled but read it from conf
+  * Update to work with current slurm-web
+  * Alternative config file path with env file
+  * Read alternate config file also from request env
+  * Set the right axis label margin to width
+  * js: Support PSS and RSS memory metrics
+  * rest: Refactor reading data from influxdb json
+  * rest: Reduce resolution for 6h requests
+  * rest: Add support for pss & rss
+  * rest: Update copyright header with date
+
+ -- Thomas HAMEL <thomas-externe.hamel@edf.fr>  Wed, 14 Mar 2018 11:33:37 +0100
+
 jobmetrics (0.2.2) calibre9; urgency=medium
 
   * Add label on both Y-axis
