@@ -1,3 +1,9 @@
+jobmetrics (1.0.1) calibre9; urgency=medium
+
+  * adding GPU metrics 
+
+ -- Nicolas Meaux <nicolas-externe.meaux@edf.fr>  Wed, 30 May 2018 15:20:52 +0200
+
 jobmetrics (1.0.0) calibre9; urgency=medium
 
   [ Rémi Palancher ]
