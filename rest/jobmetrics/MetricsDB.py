@@ -43,6 +43,12 @@ class MetricsDB(object):
            It sends an HTTP request to InfluxDB service to download the metric
            values in JSON format and returns a list.
         """
+	timejob=job.end_time-job.start_time	
+        logger.debug("time job: %d", timejob)
+	if timejob < 3600:
+		period="1h"
+	if timejob < 21600 and timejob > 3600:
+		period="6h"
 
         time_group = periods[period]
 
@@ -50,16 +56,20 @@ class MetricsDB(object):
 
         metrics_s = "\"" + "\", \"".join(metrics) + "\""
         req = "select mean(value) from {metrics} " \
-              "where time > now() - {period} " \
-              "and cluster = '{cluster}' " \
-              "and job = 'job_{job}' " \
+              "where cluster = '{cluster}' " \
+              "and (( job = 'job_{job}' and time > now() - {period} ) or" \
+              " ( job = 'none' and plugin = 'cuda' and time >= {start_time}000000000 and time <= {end_time}000000000 and node = '{nodes}' )) " \
               "group by time({time_group}), node fill(0)" \
               .format(metrics=metrics_s,
                       period=period,
                       cluster=cluster,
                       job=job.jobid,
+                      nodes=job.nodeset,
+                      start_time=job.start_time,
+                      end_time=job.end_time,
                       time_group=time_group)
 
+        logger.debug("req influx: %s", req)
         profiler.meta('metrics_req', req)
 
         payload = {'db': self.db, 'q': req, 'epoch': 'ms'}

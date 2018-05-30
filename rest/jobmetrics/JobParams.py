@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with jobmetrics.  If not, see <http://www.gnu.org/licenses/>.
 
+import time
 from ClusterShell.NodeSet import NodeSet
 
 
@@ -34,3 +35,10 @@ class JobParams(object):
         params = api.job_params(self.jobid)
         self.state = params['job_state']
         self.nodeset = NodeSet(params['nodes'].encode('utf-8'))
+        self.start_time = params['start_time']
+        epoch_time = int(time.time())
+	if epoch_time < params['end_time']:
+		self.end_time = epoch_time
+	else:
+        	self.end_time = params['end_time']
+        self.shared = params['shared']

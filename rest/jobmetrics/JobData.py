@@ -36,14 +36,18 @@ class JobData(object):
         (self.metrics, self.nodeset) = \
             db.get_metrics_results(self.cluster,
                                    self.job,
-                                   ['cpus',
-                                    'cpu-user',
-                                    'cpu-system',
+                                   ['cpu-system',
                                     'cpu-iowait',
+                                    'cpu-user',
+				    'cpu-softirq',
+                                    'cpu-idle',
                                     'memory-pss',
-                                    'memory-rss'],
+                                    'memory-rss',
+                                    'utilization_gpu',
+                                    'utilization_memory',
+				    'cpus'],
                                    self.period)
-        self.stack_cpu_idle()
+        #self.stack_cpu_idle()
         profiler = Profiler()
         profiler.meta('producers', str(self.nodeset))
         profiler.meta('nodes', str(self.job.nodeset))

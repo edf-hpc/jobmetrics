@@ -58,12 +58,14 @@
     </div>
 
     <script type="text/javascript">
-      $(document).ready(
-        function() {
-          draw_diagram();
-        }
-      );
-    </script>
+    if ( $.browser.msie ) {
+	alert("Veuillez utiliser Firefox");
+    }
+    else
+    {
+	$(document).ready(function() {draw_diagram();});
+    }
+</script>
 
 </body>
 </html>

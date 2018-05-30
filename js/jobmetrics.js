@@ -46,21 +46,36 @@ function process_metrics_result(result) {
     var cpu_system = new Array;
     var cpu_idle = new Array;
     var cpu_iowait = new Array;
+    var cpu_softirq = new Array;
+    var gpu_scale_max = 0;
+    var cpu_scale_max = 0;
     var memory_pss = new Array;
     var memory_rss = new Array;
+    var utilization_gpu = new Array;
+    var utilization_memory = new Array;
     var plots = new Array();
     var utc_offset_msec = new Date().getTimezoneOffset() * 60 * 1000;
 
     $.each(result, function( timestamp_utc, values ) {
+	if (values[7] > gpu_scale_max)
+		gpu_scale_max=values[7];
+	if (values[9] > cpu_scale_max)
+		cpu_scale_max=values[9];
+    });   
+
+    $.each(result, function( timestamp_utc, values ) {
         var timestamp = parseInt(timestamp_utc) - utc_offset_msec;
-        cpu_user.push([timestamp, values[1]]);
-        cpu_system.push([timestamp, values[2]]);
-        cpu_idle.push([timestamp, values[3]]);
-        cpu_iowait.push([timestamp, values[4]]);
+        cpu_system.push([timestamp, values[0]/cpu_scale_max]);
+        cpu_iowait.push([timestamp, values[1]/cpu_scale_max]);
+        cpu_user.push([timestamp, values[2]/cpu_scale_max]);
+        cpu_softirq.push([timestamp, values[3]/cpu_scale_max]);
+        cpu_idle.push([timestamp, values[4]/cpu_scale_max]);
         memory_pss.push([timestamp, values[5]/(1024*1024*1024)]);
         memory_rss.push([timestamp, values[6]/(1024*1024*1024)]);
+	utilization_gpu.push([timestamp, values[7]*100/gpu_scale_max]);
+        utilization_memory.push([timestamp, values[8]]);
     });
-
+    
     plots = [
         { data: cpu_system,
           color: "rgba(204,0,0,1)",
@@ -89,6 +104,15 @@ function process_metrics_result(result) {
             fill: true,
           }
         },
+        { data: cpu_softirq,
+          color: "rgba(104,153,255,1)",
+          label: "CPU softirq %",
+          stack: true,
+          lines: {
+            show: true,
+            fill: true,
+          }
+        },
         { data: cpu_idle,
           color: "rgba(115,210,22,1)",
           label: "CPU idle %",
@@ -99,7 +123,6 @@ function process_metrics_result(result) {
           }
         },
     ];
-
     if (!hide_pss) {
 	plots.push(
             { data: memory_pss,
@@ -118,7 +141,16 @@ function process_metrics_result(result) {
             }
 	);
     }
-
+    plots.push(
+	    { data: utilization_gpu,
+	      color: "rgba(52,1,164,1)",
+              label: "GPU %",
+            },
+            { data: utilization_memory,
+              color: "rgba(152,1,64,1)",
+              label: "GPU Memory %",
+            }
+    );
     return plots;
 
 }
@@ -195,10 +227,10 @@ function update(options) {
             // top/margin-top to set their height. They are also 'transformed'
             // in the CSS to rotate them by 90 or -90°.
             var yaxis_cpu_label = $("<div class='axisLabel yaxisLabel yaxis1Label'></div>")
-                                  .text("CPU usage (%)")
+                                  .text("CPU/GPU usage & GPU Memory (%)")
                                   .appendTo("#placeholder");
 
-            yaxis_cpu_label.css("margin-top", yaxis_cpu_label.width() / 2 - 20);
+            yaxis_cpu_label.css("margin-top", yaxis_cpu_label.width() / 2);
             yaxis_cpu_label.css("left", "-8px");
 
             var yaxis_mem_label = $("<div class='axisLabel yaxisLabel yaxis2Label'></div>")
@@ -206,7 +238,7 @@ function update(options) {
                                   .appendTo("#placeholder");
 
             yaxis_mem_label.css("margin-top", -yaxis_mem_label.width() / 2);
-            yaxis_mem_label.css("right", -yaxis_mem_label.width() - 10);
+            yaxis_mem_label.css("right", -yaxis_mem_label.width());
         }
         plot.setData(process_metrics_result(result['data']));
         // Since the axes don't change, we don't need to call plot.setupGrid()
